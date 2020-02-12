@@ -1,5 +1,7 @@
 # pylights
 
+![Pylights demo](screenshots/pylights.gif "Pylight demo")
+
 ## Installation
 
 * Download the project
