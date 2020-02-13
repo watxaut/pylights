@@ -49,6 +49,33 @@ class Light:
         self.try_move_wall()
         self.pos = [int(i) for i in sum_tuples(self.pos, self.vel)]
 
+    # def move_step(self, mouse_position, reverse, step=4):
+    #     f_steps = [x / step for x in range(step)]
+    #     self.update_acceleration(mouse_position, reverse)
+
+    def get_next_pos(self, delta_time, mouse_position, reverse):
+        self.update_acceleration(mouse_position, reverse)
+        self.try_move_wall()
+        x_last_pos, y_last_pos = self.pos
+        x_last_vel, y_last_vel = self.vel
+        x_acc, y_acc = self.acc
+        new_x = x_last_pos + x_last_vel * delta_time + 0.5 * x_acc * delta_time**2
+        new_y = y_last_pos + y_last_vel * delta_time + 0.5 * y_acc * delta_time**2
+
+        if not self.random_move():
+            self.pos = (int(new_x), int(new_y))
+        else:
+            new_x = int(new_x) + random.randint(-1, 1)
+            new_y = int(new_y) + random.randint(-1, 1)
+            self.pos = (new_x, new_y)
+
+        x_vel, y_vel = (x_last_vel + x_acc * delta_time, y_last_vel + y_acc * delta_time)
+        mod_new_vel = (x_vel ** 2 + y_vel ** 2) ** 0.5
+        if mod_new_vel > MAX_VEL:
+            x_vel = x_vel / mod_new_vel * MAX_VEL
+            y_vel = y_vel / mod_new_vel * MAX_VEL
+        self.vel = (x_vel, y_vel)
+
     def try_move_wall(self):
         try_pos = [int(i) for i in sum_tuples(self.pos, self.vel)]
         if try_pos[0] < 0 or try_pos[0] > self.window_size[0]:
@@ -56,6 +83,10 @@ class Light:
 
         if try_pos[1] < 0 or try_pos[1] > self.window_size[1]:
             self.vel = (self.vel[0], -self.vel[1])
+
+    @staticmethod
+    def random_move():
+        return random.randint(0, 5000) == 917
 
     def update_velocity(self):
         x_vel, y_vel = sum_tuples(self.vel, self.acc)
@@ -87,14 +118,18 @@ class Light:
 
 class Lights:
     lights = None
+    delta_time = 1
 
     def create_lights(self, number_of_lights):
         self.lights = [Light(WINDOW_SIZE) for _ in range(number_of_lights)]
 
     def refresh_lights_position(self, mouse_position, reverse):
         for light in self.lights:
-            light.move(mouse_position, reverse)
+            light.get_next_pos(self.delta_time, mouse_position, reverse)
 
     def __iter__(self):
         for light in self.lights:
             yield light
+
+    def set_delta_time(self, delta_time):
+        self.delta_time = delta_time
